@@ -1,0 +1,111 @@
+// MovieDetails will get the movieTitle value from App
+// and with that title will fetch some details about it
+// and will display those info in a Card
+
+// LIFECYCLE
+// 1) initial render(), with just the empty Card
+// 2) componentDidMount() fires and triggers the fetch()
+// 3) when the fetch finishes, componentDidMount sets the state
+// 4) when the state or the props of a component change, the render() method fires again!
+// 5) this time this.state.movie is a thing, so the interface fills up with the poster, the title etc.
+// 6) changing then the movie title in the dropdown will make MovieDetails update, because a new prop movieTitle will be passed to it
+// 7) you can intercept this movieTitle update with a lifecycle method called componentDidUpdate
+// 8) componentDidUpdate will fire every time a prop or state change is detected. Use it checking the difference from before, on the state or on the props
+// 9) so you can re-fire your logic in specific moments
+// 10) chances are, if you don't put a check in your componentDidUpdate, infinite loops will occurr :(
+
+import { useState, useEffect } from 'react'
+import { Card } from 'react-bootstrap'
+
+const MovieDetails = ({ movieTitle }) => {
+  // MovieDetails is receiving at any moment the selected movie in the dropdown
+  // it will be found in this.props.movieTitle
+  // we want to use this.props.movieTitle to perform a fetch to omdbAPI
+
+  // state = {
+  //   // in here I want to save all the movie details!!
+  //   // the actual object holding the poster, the year, the title etc.
+  //   movie: null,
+  // }
+  const [movie, setMovie] = useState(null)
+
+  // componentDidMount = async () => {
+  //   // componentDidMount is a lifecycle method occurring JUST ONCE
+  //   // it triggers just after the initial render of the component
+  //   console.log('componentDidMount happened!')
+  //   this.fetchMovieDetails()
+  // }
+
+  // componentDidUpdate = (previousProps, previousState) => {
+  //   // this one is veeery frequent!
+  //   // componentDidUpdate fires EVERY TIME there's a change
+  //   // in the props or in the state (just like render!)
+
+  //   // componentDidUpdate works too well!
+  //   // we need to pinpoint just the situations in which we WANT to do a re-fetch!
+  //   // when do we want to re-fetch the movie details?
+  //   // then the selection in the dropdown changes!
+  //   // NOT when the state changes...
+  //   // how can we trigger our network call just when this.props.movieTitle changes?
+  //   // with previousProps and previousState!
+  //   if (previousProps.movieTitle !== this.props.movieTitle) {
+  //     this.fetchMovieDetails()
+  //   }
+  //   // you always want to perform a check in componentDidUpdate before doing anything
+  //   // checking a change in the props will stop your component from re-doing the fetch when you set the state
+  // }
+
+  const fetchMovieDetails = async () => {
+    try {
+      let response = await fetch(
+        'http://www.omdbapi.com/?apikey=24ad60e9&s=' + movieTitle
+        // this initially will be
+        // http://www.omdbapi.com/?apikey=24ad60e9&s=Batman%20Begins
+      )
+      if (response.ok) {
+        // everything went ok!
+        let data = await response.json()
+        console.log(data.Search[0])
+        // you want to store this data!!
+        // you need to store it into a component's state
+        // this.setState({
+        //   movie: data.Search[0],
+        // })
+        setMovie(data.Search[0])
+      } else {
+        // something went wrong with the request :(
+        alert('houston we got an error')
+      }
+    } catch (error) {
+      // usually this means an internet problem!
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchMovieDetails()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [movieTitle])
+
+  console.log('render() fired again!')
+  return (
+    <Card>
+      {/* this.state.movie initially is null, so I have to put this check in place */}
+      {/* and render the content just after finishing the fetching, so when this.state.movie */}
+      {/* is actually a thing */}
+      {movie && (
+        <>
+          <Card.Img variant='top' src={movie.Poster} />
+          <Card.Body className='text-dark'>
+            <Card.Title>{movie.Title}</Card.Title>
+            <Card.Text>
+              {movie.Year} - {movie.imdbID}
+            </Card.Text>
+          </Card.Body>
+        </>
+      )}
+    </Card>
+  )
+}
+
+export default MovieDetails
